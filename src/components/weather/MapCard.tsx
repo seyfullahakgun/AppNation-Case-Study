@@ -25,7 +25,7 @@ export default function MapCard({ data }: MapCardProps) {
 
   return (
     <Card>
-      <div className="h-full w-full rounded-lg overflow-hidden">
+      <div className="h-full w-full min-h-[300px] rounded-lg overflow-hidden">
         <Map
           position={[data.lat, data.lon]}
           cityName={selectedCity?.name}

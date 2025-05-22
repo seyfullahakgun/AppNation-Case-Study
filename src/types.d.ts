@@ -98,6 +98,7 @@ export interface WeatherAlert {
   end: number;
   description: string;
   tags: string[];
+  severity: "warning" | "danger" | "info";
 }
 
 export interface WeatherData {

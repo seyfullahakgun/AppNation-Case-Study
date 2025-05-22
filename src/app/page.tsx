@@ -10,6 +10,8 @@ import { useWeather } from "@/hooks/useWeather";
 import CurrentWeatherCard from "@/components/weather/CurrentWeatherCard";
 import DailyForecastCard from "@/components/weather/DailyForecastCard";
 import MapCard from "@/components/weather/MapCard";
+import WeatherAlertCard from "@/components/weather/WeatherAlertCard";
+import HourlyForecastCard from "@/components/weather/HourlyForecastCard";
 
 export default function Home() {
   const { setTheme, selectedCity, units } = useSettingsStore();
@@ -58,6 +60,8 @@ export default function Home() {
                 <CurrentWeatherCard data={weatherData} />
                 <DailyForecastCard data={weatherData} />
                 <MapCard data={weatherData} />
+                <WeatherAlertCard data={weatherData} />
+                <HourlyForecastCard data={weatherData} />
               </div>
             ) : null}
           </div>

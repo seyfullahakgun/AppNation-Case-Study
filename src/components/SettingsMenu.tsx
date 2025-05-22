@@ -35,8 +35,8 @@ const SettingsMenu: React.FC = () => {
         <Image
           src={`/icons/settings-${theme === "dark" ? "light" : "dark"}.svg`}
           alt="Settings"
-          width={44}
-          height={44}
+          width={32}
+          height={32}
           className="opacity-70"
         />
       </motion.button>
