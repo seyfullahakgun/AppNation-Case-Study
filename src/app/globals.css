@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary: #007bff;
+  --primary-foreground: #ffffff;
+  --secondary: #6c757d;
 }
 
 @theme inline {
@@ -16,6 +19,21 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary: #007bff;
+    --primary-foreground: #ffffff;
+    --secondary: #6c757d;
+  }
+}
+
+@layer base {
+  :root {
+    --color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-scheme: dark;
+    }
   }
 }
 
