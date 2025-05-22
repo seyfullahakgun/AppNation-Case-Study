@@ -1,85 +1,139 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import Image from 'next/image'
-import { City } from '@/types'
-import { useSettingsStore } from '@/store'
+import React, { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { City } from "@/types";
+import { useSettingsStore } from "@/store";
+import { api } from "@/lib/axios";
+
+const RECENT_SEARCHES_KEY = "recentSearches";
 
 const SearchBar = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchValue, setSearchValue] = useState('')
-  const [debouncedValue, setDebouncedValue] = useState('')
-  const [recentSearches, setRecentSearches] = useState<City[]>([])
-  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [debouncedValue, setDebouncedValue] = useState("");
+  const [recentSearches, setRecentSearches] = useState<City[]>([]);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const { selectedCity, setSelectedCity } = useSettingsStore()
+  const { selectedCity, setSelectedCity } = useSettingsStore();
+  const { theme } = useSettingsStore();
+
+  // Dropdown görünürlük kontrolü
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    } else {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 300); // Animasyon süresi kadar bekle
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // localStorage'dan recentSearches'i yükle
+  useEffect(() => {
+    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch {
+        setRecentSearches([]);
+      }
+    }
+  }, []);
+
+  // recentSearches değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recentSearches));
+  }, [recentSearches]);
 
   // Initialize search value with selected city
   useEffect(() => {
     if (selectedCity) {
-      setSearchValue(selectedCity.name)
+      setSearchValue(selectedCity.name);
     }
-  }, [selectedCity])
+  }, [selectedCity]);
 
   // Debounce process
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedValue(searchValue)
-    }, 300)
+      setDebouncedValue(searchValue);
+    }, 300);
 
-    return () => clearTimeout(timer)
-  }, [searchValue])
+    return () => clearTimeout(timer);
+  }, [searchValue]);
 
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
         // Always restore the selected city name when clicking outside
         if (selectedCity) {
-          setSearchValue(selectedCity.name)
+          setSearchValue(selectedCity.name);
         }
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [selectedCity])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectedCity]);
 
-  // City search query
-  const { data: cities, isLoading, error } = useQuery({
-    queryKey: ['cities', debouncedValue],
+  // City search query with Axios
+  const {
+    data: cities,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["cities", debouncedValue],
     queryFn: async () => {
-      if (!debouncedValue) return []
-      const response = await fetch(`/api/cities?q=${debouncedValue}`)
-      if (!response.ok) throw new Error('Failed to fetch cities')
-      return response.json()
+      if (!debouncedValue) return [];
+      try {
+        const { data } = await api.get(`/cities?q=${debouncedValue}`);
+        return data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          throw new Error(
+            error.response?.data?.message || "Failed to fetch cities"
+          );
+        }
+        throw error;
+      }
     },
     enabled: debouncedValue.length > 0,
-  })
+  });
 
   const handleCitySelect = (city: City) => {
-    setSelectedCity(city)
-    setSearchValue(city.name)
-    setRecentSearches(prev => {
-      const newSearches = [city, ...prev.filter(c => c.name !== city.name)].slice(0, 5)
-      return newSearches
-    })
-    setIsOpen(false)
-  }
+    setSelectedCity(city);
+    setSearchValue(city.name);
+    setRecentSearches((prev) => {
+      const newSearches = [
+        city,
+        ...prev.filter((c) => c.name !== city.name),
+      ].slice(0, 5);
+      return newSearches;
+    });
+    setIsOpen(false);
+  };
 
   const handleInputFocus = () => {
-    setIsOpen(true)
+    setIsOpen(true);
     // Clear input only if there's a selected city
     if (selectedCity) {
-      setSearchValue('')
+      setSearchValue("");
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value)
-  }
+    setSearchValue(e.target.value);
+  };
 
   return (
     <div ref={wrapperRef} className="relative w-full max-w-md">
@@ -90,88 +144,111 @@ const SearchBar = () => {
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder="Search for a city..."
-          className="w-full px-4 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400"
+          className="w-full px-4 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card-background text-card-foreground border-border-light dark:border-border-light"
         />
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-          <Image
-            src="/icons/search.svg"
-            alt="Search"
-            width={20}
-            height={20}
-            className="dark:invert opacity-50 dark:text-white "
-          />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
+          {theme === "dark" ? (
+            <Image
+              src="/icons/search-light.svg"
+              alt="Search"
+              width={20}
+              height={20}
+              className="opacity-50"
+            />
+          ) : (
+            <Image
+              src="/icons/search-dark.svg"
+              alt="Search"
+              width={20}
+              height={20}
+              className="opacity-50"
+            />
+          )}
         </div>
       </div>
 
-      <div 
-        className={`
-          absolute w-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg
-          transition-all duration-300 ease-in-out transform origin-top
-          ${isOpen 
-            ? 'opacity-100 scale-y-100' 
-            : 'opacity-0 scale-y-0 pointer-events-none'
-          }
-        `}
-      >
-        {searchValue ? (
-          <>
-            {isLoading && (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">Loading...</div>
-            )}
-            {error && (
-              <div className="p-4 text-center text-red-500">An error occurred</div>
-            )}
-            {!isLoading && !error && cities?.length === 0 && (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                No results found for "{searchValue}"
-              </div>
-            )}
-            {cities?.map((city: City, index: number) => (
-              <button
-                key={`${city.name}-${city.country}-${index}`}
-                onClick={() => handleCitySelect(city)}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
-              >
-                <Image
-                  src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
-                  alt={city.country}
-                  width={24}
-                  height={16}
-                />
-                <span>{city.name}</span>
-                {city.state && <span className="text-gray-500 dark:text-gray-400">({city.state})</span>}
-              </button>
-            ))}
-          </>
-        ) : (
-          <div className="p-2">
-            <h3 className="px-2 py-1 text-sm font-semibold text-gray-500 dark:text-gray-400">Recent Searches</h3>
-            {recentSearches.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                No recent searches
-              </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute w-full mt-2 bg-card-background text-card-foreground border border-border-light dark:border-border-light rounded-lg shadow-lg"
+          >
+            {searchValue ? (
+              <>
+                {isLoading && (
+                  <div className="p-4 text-center text-secondary">Loading...</div>
+                )}
+                {error && (
+                  <div className="p-4 text-center text-red-500">
+                    {error instanceof Error ? error.message : "An error occurred"}
+                  </div>
+                )}
+                {!isLoading && !error && cities?.length === 0 && (
+                  <div className="p-4 text-center text-secondary">
+                    No results found for "{searchValue}"
+                  </div>
+                )}
+                {cities?.map((city: City, index: number) => (
+                  <motion.button
+                    key={`${city.name}-${city.country}-${index}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    onClick={() => handleCitySelect(city)}
+                    className="w-full px-4 py-2 text-left hover:bg-border-light dark:hover:bg-border-light flex items-center gap-2 text-foreground cursor-pointer"
+                  >
+                    <Image
+                      src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
+                      alt={city.country}
+                      width={24}
+                      height={16}
+                    />
+                    <span>{city.name}</span>
+                    {city.state && (
+                      <span className="text-secondary">({city.state})</span>
+                    )}
+                  </motion.button>
+                ))}
+              </>
             ) : (
-              recentSearches.map((city, index) => (
-                <button
-                  key={`${city.name}-${city.country}-${index}`}
-                  onClick={() => handleCitySelect(city)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 dark:text-white"
-                >
-                  <Image
-                    src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
-                    alt={city.country}
-                    width={24}
-                    height={16}
-                  />
-                  <span>{city.name}</span>
-                </button>
-              ))
+              <div className="p-2">
+                <h3 className="px-2 py-1 text-sm font-semibold text-secondary">
+                  Recent Searches
+                </h3>
+                {recentSearches.length === 0 ? (
+                  <div className="p-4 text-center text-secondary">
+                    No recent searches
+                  </div>
+                ) : (
+                  recentSearches.map((city, index) => (
+                    <motion.button
+                      key={`${city.name}-${city.country}-${index}`}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                      onClick={() => handleCitySelect(city)}
+                      className="w-full px-4 py-2 text-left hover:bg-border-light dark:hover:bg-border-light flex items-center gap-2 text-card-foreground cursor-pointer"
+                    >
+                      <Image
+                        src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
+                        alt={city.country}
+                        width={24}
+                        height={16}
+                      />
+                      <span>{city.name}</span>
+                    </motion.button>
+                  ))
+                )}
+              </div>
             )}
-          </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
-  )
-}
+  );
+};
 
-export default SearchBar
+export default SearchBar;

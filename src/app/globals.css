@@ -1,28 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  /* Ana arka plan ve metin renkleri */
+  --background: #f5f5f5;
   --foreground: #171717;
+
+  /* Bileşen arka plan ve metin renkleri */
+  --card-background: #ffffff;
+  --card-foreground: #171717;
+
+  /* Diğer renkler */
   --primary: #007bff;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #f5f5f5;
   --secondary: #6c757d;
+
+  /* Border renkleri */
+  --border-light: #e5e5e5;
+  --border-dark: #2a2a2a;
 }
 
 @theme inline {
+  --color-border-light: var(--border-light);
+  --color-border-dark: var(--border-dark);
+  --color-primary: var(--primary);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card-background: var(--card-background);
+  --color-card-foreground: var(--card-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #007bff;
-    --primary-foreground: #ffffff;
-    --secondary: #6c757d;
-  }
+[data-theme="dark"] {
+  /* Ana arka plan ve metin renkleri */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  /* Bileşen arka plan ve metin renkleri */
+  --card-background: #1a1a1a;
+  --card-foreground: #ededed;
+
+  /* Diğer renkler */
+  --primary: #007bff;
+  --primary-foreground: #ffffff;
+  --secondary: #6c757d;
+
+  /* Border renkleri */
+  --border-light: #2a2a2a;
+  --border-dark: #404040;
 }
 
 @layer base {
@@ -30,10 +55,8 @@
     --color-scheme: light;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-scheme: dark;
-    }
+  [data-theme="dark"] {
+    --color-scheme: dark;
   }
 }
 
@@ -41,4 +64,18 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+:root,
+[data-theme="dark"] {
+  transition: background 300ms, color 300ms;
+}
+
+body,
+input,
+button,
+[class*="bg-"],
+[class*="text-"],
+[class*="border-"] {
+  transition: background-color 300ms, color 300ms, border-color 300ms;
 }
