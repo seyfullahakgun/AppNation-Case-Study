@@ -46,51 +46,6 @@ export default function SearchBar() {
     setIsOpen(false);
   }, [setSelectedCity]);
 
-  const handleSearch = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
-          searchQuery
-        )}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY}`
-      );
-
-      if (!response.ok) {
-        throw new Error("City not found");
-      }
-
-      const data = await response.json();
-
-      if (data.length === 0) {
-        throw new Error("City not found");
-      }
-
-      const city = {
-        name: data[0].name,
-        country: data[0].country,
-        lat: data[0].lat,
-        lon: data[0].lon,
-        state: data[0].state || data[0].name,
-      };
-
-      setSelectedCity(city);
-      setSearchQuery("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      showToast({
-        message: err instanceof Error ? err.message : "An error occurred",
-        type: "error",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchQuery, setSelectedCity, showToast]);
-
   // Memoize search icon
   const searchIcon = useMemo(() => (
     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
@@ -168,8 +123,6 @@ export default function SearchBar() {
   // City search query
   const {
     data: cities,
-    isLoading: citiesLoading,
-    error: citiesError,
   } = useQuery({
     queryKey: ["cities", debouncedValue],
     queryFn: async () => {
@@ -233,7 +186,7 @@ export default function SearchBar() {
                 )}
                 {!isLoading && !error && cities?.length === 0 && (
                   <div className="p-4 text-center text-secondary">
-                    No results found for "{searchQuery}"
+                    No results found for {searchQuery}
                   </div>
                 )}
                 {cities?.map((city: City, index: number) => (

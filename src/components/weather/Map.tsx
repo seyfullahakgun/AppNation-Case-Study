@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { Icon, LatLngExpression } from "leaflet";
+import { Icon } from "leaflet";
 
 interface MapProps {
   position: [number, number];

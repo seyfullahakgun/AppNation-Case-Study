@@ -1,6 +1,5 @@
 "use client";
 
-import { WeatherData } from "@/types";
 import Card from "@/components/ui/Card";
 import { useSettingsStore } from "@/store";
 import Image from "next/image";

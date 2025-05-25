@@ -7,17 +7,17 @@ interface SettingsState {
   units: Unit;
   theme: Theme;
   selectedCity: City | null;
-  
+
   // Toast
   currentToast: Toast | null;
-  
+
   // Settings Actions
   toggleUnits: () => void;
   setUnits: (unit: Unit) => void;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
   setSelectedCity: (city: City | null) => void;
-  
+
   // Toast Actions
   showToast: (toast: Omit<Toast, "id">) => void;
   hideToast: () => void;
@@ -35,9 +35,9 @@ export const useSettingsStore = create<SettingsState>()(
         country: "TR",
         lat: 41.0082,
         lon: 28.9784,
-        state: "Istanbul"
+        state: "Istanbul",
       },
-      
+
       // Toast
       currentToast: null,
 
@@ -49,18 +49,22 @@ export const useSettingsStore = create<SettingsState>()(
             units: newUnits,
             currentToast: {
               id: Math.random().toString(36).substring(7),
-              message: `Temperature unit changed to ${newUnits === "metric" ? "Celsius" : "Fahrenheit"}`,
+              message: `Temperature unit changed to ${
+                newUnits === "metric" ? "Celsius" : "Fahrenheit"
+              }`,
               type: "info",
             },
           };
         }),
-        
+
       setUnits: (unit) =>
-        set((state) => ({
+        set(() => ({
           units: unit,
           currentToast: {
             id: Math.random().toString(36).substring(7),
-            message: `Temperature unit changed to ${unit === "metric" ? "Celsius" : "Fahrenheit"}`,
+            message: `Temperature unit changed to ${
+              unit === "metric" ? "Celsius" : "Fahrenheit"
+            }`,
             type: "info",
           },
         })),
@@ -72,24 +76,28 @@ export const useSettingsStore = create<SettingsState>()(
             theme: newTheme,
             currentToast: {
               id: Math.random().toString(36).substring(7),
-              message: `Theme changed to ${newTheme === "light" ? "light" : "dark"} mode`,
+              message: `Theme changed to ${
+                newTheme === "light" ? "light" : "dark"
+              } mode`,
               type: "info",
             },
           };
         }),
-        
+
       setTheme: (theme) =>
-        set((state) => ({
+        set(() => ({
           theme,
           currentToast: {
             id: Math.random().toString(36).substring(7),
-            message: `Theme changed to ${theme === "light" ? "light" : "dark"} mode`,
+            message: `Theme changed to ${
+              theme === "light" ? "light" : "dark"
+            } mode`,
             type: "info",
           },
         })),
 
       setSelectedCity: (city) =>
-        set((state) => ({
+        set(() => ({
           selectedCity: city,
           currentToast: {
             id: Math.random().toString(36).substring(7),
@@ -101,11 +109,13 @@ export const useSettingsStore = create<SettingsState>()(
       // Toast Actions
       showToast: (toast) =>
         set({
-          currentToast: { ...toast, id: Math.random().toString(36).substring(7) },
+          currentToast: {
+            ...toast,
+            id: Math.random().toString(36).substring(7),
+          },
         }),
-        
-      hideToast: () =>
-        set({ currentToast: null }),
+
+      hideToast: () => set({ currentToast: null }),
     }),
     {
       name: "weather-dashboard-settings",
