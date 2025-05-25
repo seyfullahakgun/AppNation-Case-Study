@@ -15,14 +15,51 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import { useMemo } from "react";
 
 export default function HourlyForecastCard() {
   const { theme, selectedCity, units } = useSettingsStore();
   const { data, isLoading } = useWeather(selectedCity);
 
+  // Chart verilerini memoize et
+  const { chartData, weatherIcons, nextHourIndex, tempRange, maxTemp } =
+    useMemo(() => {
+      if (!data)
+        return {
+          chartData: [],
+          weatherIcons: [],
+          nextHourIndex: -1,
+          tempRange: 0,
+          maxTemp: 0,
+        };
+
+      const chartData = data.hourly.slice(0, 48).map((hour) => ({
+        time: new Date(hour.dt * 1000).toLocaleTimeString("tr-TR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        temp: Math.round(hour.temp),
+        weather: hour.weather[0],
+      }));
+
+      const weatherIcons = chartData.filter((_, index) => index % 2 === 0);
+
+      const currentHour = new Date().getHours();
+      const nextHourIndex = chartData.findIndex(
+        (data) => parseInt(data.time.split(":")[0]) === (currentHour + 1) % 24
+      );
+
+      const temps = chartData.map((d) => d.temp);
+      const minTemp = Math.min(...temps);
+      const maxTemp = Math.max(...temps);
+      const tempRange = maxTemp - minTemp;
+
+      return { chartData, weatherIcons, nextHourIndex, tempRange, maxTemp };
+    }, [data]);
+
   if (isLoading) {
     return (
-      <Card className="col-span-1 sm:col-span-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full transition-all duration-300">
+      <Card className="col-span-1 sm:col-span-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full">
         <div className="px-6 pt-6">
           <Skeleton className="w-32 h-6 bg-gray-100 dark:bg-gray-700" />
         </div>
@@ -40,7 +77,7 @@ export default function HourlyForecastCard() {
 
   if (!data) {
     return (
-      <Card className="col-span-1 sm:col-span-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full transition-all duration-300">
+      <Card className="col-span-1 sm:col-span-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full">
         <div className="px-6 pt-6">
           <h3 className="text-lg font-semibold">Saatlik Tahmin</h3>
         </div>
@@ -50,25 +87,6 @@ export default function HourlyForecastCard() {
       </Card>
     );
   }
-
-  // Saatlik verileri grafik için hazırla
-  const chartData = data.hourly.slice(0, 48).map((hour) => ({
-    time: new Date(hour.dt * 1000).toLocaleTimeString("tr-TR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    temp: Math.round(hour.temp),
-    weather: hour.weather[0],
-  }));
-
-  // 2 saatlik aralıklarla ikonları göster
-  const weatherIcons = chartData.filter((_, index) => index % 2 === 0);
-
-  // Şu anki saatten 1 saat sonrasını bul
-  const currentHour = new Date().getHours();
-  const nextHourIndex = chartData.findIndex(
-    (data) => parseInt(data.time.split(":")[0]) === (currentHour + 1) % 24
-  );
 
   // Tooltip içeriği
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -101,14 +119,8 @@ export default function HourlyForecastCard() {
     return null;
   };
 
-  // Sıcaklık değerlerinin min ve max değerlerini bul
-  const temps = chartData.map((d) => d.temp);
-  const minTemp = Math.min(...temps);
-  const maxTemp = Math.max(...temps);
-  const tempRange = maxTemp - minTemp;
-
   return (
-    <Card className="col-span-1 sm:col-span-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full transition-all duration-300">
+    <Card className="col-span-1 sm:col-span-2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full ">
       <div className="px-6 pt-6">
         <h3 className="text-lg font-semibold">Saatlik Tahmin</h3>
       </div>
@@ -122,17 +134,17 @@ export default function HourlyForecastCard() {
             <div className="absolute top-0 left-0 w-full">
               {weatherIcons.map((data, index) => {
                 const { iconPath } = useWeatherIcon(data.weather);
-                // Her saat için 85px
                 const position = index * 85;
-                // Sıcaklık değerine göre y pozisyonunu hesapla
-                const yPosition = ((maxTemp - data.temp) / tempRange) * 50 + (units === "metric" ? 10 : 40); // 200px grafik yüksekliği, 20px üst margin
+                const yPosition =
+                  ((maxTemp - data.temp) / tempRange) * 50 +
+                  (units === "metric" ? 10 : 40);
 
                 return (
                   <div
                     key={index}
                     className={`${
                       index === 0 && "hidden"
-                    } flex flex-col items-center justify-center absolute transition-all duration-300`}
+                    } flex flex-col items-center justify-center absolute`}
                     style={{
                       left: `${position}px`,
                       top: `${yPosition}px`,
@@ -194,7 +206,7 @@ export default function HourlyForecastCard() {
                     stroke: theme === "dark" ? "#60A5FA" : "#3B82F6",
                     strokeWidth: 2,
                   }}
-                  isAnimationActive
+                  isAnimationActive={false}
                 />
                 <Area
                   type="monotone"
@@ -202,6 +214,7 @@ export default function HourlyForecastCard() {
                   stroke={theme === "dark" ? "#60A5FA" : "#3B82F6"}
                   fillOpacity={1}
                   fill="url(#colorTemp)"
+                  isAnimationActive={false}
                 />
                 {nextHourIndex !== -1 && (
                   <ReferenceLine
