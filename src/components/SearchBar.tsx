@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import axios from "axios";
@@ -21,83 +21,32 @@ export default function SearchBar() {
   const [recentSearches, setRecentSearches] = useState<City[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // localStorage'dan recentSearches'i yükle
-  useEffect(() => {
-    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
-    if (stored) {
-      try {
-        setRecentSearches(JSON.parse(stored));
-      } catch {
-        setRecentSearches([]);
-      }
-    }
+  // Memoize handlers
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   }, []);
 
-  // recentSearches değiştiğinde localStorage'a kaydet
-  useEffect(() => {
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recentSearches));
-  }, [recentSearches]);
-
-  // Initialize search value with selected city
-  useEffect(() => {
+  const handleInputFocus = useCallback(() => {
+    setIsOpen(true);
     if (selectedCity) {
-      setSearchQuery(selectedCity.name);
+      setSearchQuery("");
     }
   }, [selectedCity]);
 
-  // Debounce process
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(searchQuery);
-    }, 300);
+  const handleCitySelect = useCallback((city: City) => {
+    setSelectedCity(city);
+    setSearchQuery(city.name);
+    setRecentSearches((prev) => {
+      const newSearches = [
+        city,
+        ...prev.filter((c) => c.name !== city.name),
+      ].slice(0, 5);
+      return newSearches;
+    });
+    setIsOpen(false);
+  }, [setSelectedCity]);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        // Always restore the selected city name when clicking outside
-        if (selectedCity) {
-          setSearchQuery(selectedCity.name);
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selectedCity]);
-
-  // City search query with Axios
-  const {
-    data: cities,
-    isLoading: citiesLoading,
-    error: citiesError,
-  } = useQuery({
-    queryKey: ["cities", debouncedValue],
-    queryFn: async () => {
-      if (!debouncedValue) return [];
-      try {
-        const { data } = await api.get(`/cities?q=${debouncedValue}`);
-        return data;
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          throw new Error(
-            error.response?.data?.message || "Failed to fetch cities"
-          );
-        }
-        throw error;
-      }
-    },
-    enabled: debouncedValue.length > 0,
-  });
-
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
@@ -112,13 +61,13 @@ export default function SearchBar() {
       );
 
       if (!response.ok) {
-        throw new Error("Şehir bulunamadı");
+        throw new Error("City not found");
       }
 
       const data = await response.json();
 
       if (data.length === 0) {
-        throw new Error("Şehir bulunamadı");
+        throw new Error("City not found");
       }
 
       const city = {
@@ -132,40 +81,120 @@ export default function SearchBar() {
       setSelectedCity(city);
       setSearchQuery("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      setError(err instanceof Error ? err.message : "An error occurred");
       showToast({
-        message: err instanceof Error ? err.message : "Bir hata oluştu",
+        message: err instanceof Error ? err.message : "An error occurred",
         type: "error",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, setSelectedCity, showToast]);
 
-  const handleCitySelect = (city: City) => {
-    setSelectedCity(city);
-    setSearchQuery(city.name);
-    setRecentSearches((prev) => {
-      const newSearches = [
-        city,
-        ...prev.filter((c) => c.name !== city.name),
-      ].slice(0, 5);
-      return newSearches;
-    });
-    setIsOpen(false);
-  };
+  // Memoize search icon
+  const searchIcon = useMemo(() => (
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
+      {theme === "dark" ? (
+        <Image
+          src="/icons/search-light.svg"
+          alt="Search"
+          width={20}
+          height={20}
+          className="opacity-50"
+        />
+      ) : (
+        <Image
+          src="/icons/search-dark.svg"
+          alt="Search"
+          width={20}
+          height={20}
+          className="opacity-50"
+        />
+      )}
+    </div>
+  ), [theme]);
 
-  const handleInputFocus = () => {
-    setIsOpen(true);
-    // Clear input only if there's a selected city
-    if (selectedCity) {
-      setSearchQuery("");
+  // Load recent searches
+  useEffect(() => {
+    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (stored) {
+      try {
+        setRecentSearches(JSON.parse(stored));
+      } catch {
+        setRecentSearches([]);
+      }
     }
-  };
+  }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+  // Save recent searches
+  useEffect(() => {
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recentSearches));
+  }, [recentSearches]);
+
+  // Initialize search value
+  useEffect(() => {
+    if (selectedCity) {
+      setSearchQuery(selectedCity.name);
+    }
+  }, [selectedCity]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        if (selectedCity) {
+          setSearchQuery(selectedCity.name);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectedCity]);
+
+  // City search query
+  const {
+    data: cities,
+    isLoading: citiesLoading,
+    error: citiesError,
+  } = useQuery({
+    queryKey: ["cities", debouncedValue],
+    queryFn: async () => {
+      if (!debouncedValue) return [];
+      try {
+        const { data } = await api.get(`/cities?q=${debouncedValue}`);
+        return data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const errorMessage = error.response?.data?.message || "Failed to fetch cities";
+          showToast({
+            message: errorMessage,
+            type: "error",
+          });
+          throw new Error(errorMessage);
+        }
+        showToast({
+          message: "An unexpected error occurred",
+          type: "error",
+        });
+        throw error;
+      }
+    },
+    enabled: debouncedValue.length > 0,
+  });
 
   return (
     <div ref={wrapperRef} className="relative w-full max-w-md">
@@ -178,25 +207,7 @@ export default function SearchBar() {
           placeholder="Search for a city..."
           className="w-full px-4 py-2 pl-10 text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary border border-gray-200 dark:border-gray-400 transition-all duration-300"
         />
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
-          {theme === "dark" ? (
-            <Image
-              src="/icons/search-light.svg"
-              alt="Search"
-              width={20}
-              height={20}
-              className="opacity-50"
-            />
-          ) : (
-            <Image
-              src="/icons/search-dark.svg"
-              alt="Search"
-              width={20}
-              height={20}
-              className="opacity-50"
-            />
-          )}
-        </div>
+        {searchIcon}
       </div>
 
       <AnimatePresence>

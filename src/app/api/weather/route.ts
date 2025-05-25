@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/3.0";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get("lat");
@@ -8,57 +11,56 @@ export async function GET(request: Request) {
 
   if (!lat || !lon) {
     return NextResponse.json(
-      { error: "Koordinatlar gerekli" },
+      { error: "Latitude and longitude are required" },
       { status: 400 }
     );
   }
 
-  if (!process.env.OPENWEATHER_API_KEY) {
-    console.error("OPENWEATHER_API_KEY bulunamadı");
+  if (!OPENWEATHER_API_KEY) {
+    console.error("OPENWEATHER_API_KEY not found");
     return NextResponse.json(
-      { error: "API anahtarı yapılandırılmamış" },
+      { error: "API key is not configured" },
       { status: 500 }
     );
   }
 
   try {
     const response = await fetch(
-      `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=${units}&appid=${process.env.OPENWEATHER_API_KEY}`
+      `${OPENWEATHER_BASE_URL}/onecall?lat=${lat}&lon=${lon}&units=${units}&appid=${OPENWEATHER_API_KEY}`
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("OpenWeather API Hatası:", {
+      console.error("OpenWeather API Error:", {
         status: response.status,
         statusText: response.statusText,
         data: errorData
       });
 
-      // OpenWeather API hata kodlarına göre özel mesajlar
       switch (response.status) {
         case 400:
           return NextResponse.json(
-            { error: "Geçersiz koordinatlar" },
+            { error: "Invalid coordinates" },
             { status: 400 }
           );
         case 401:
           return NextResponse.json(
-            { error: "Geçersiz API anahtarı" },
+            { error: "Invalid API key" },
             { status: 401 }
           );
         case 404:
           return NextResponse.json(
-            { error: "Hava durumu verisi bulunamadı" },
+            { error: "Weather data not found" },
             { status: 404 }
           );
         case 429:
           return NextResponse.json(
-            { error: "API istek limiti aşıldı" },
+            { error: "API request limit exceeded" },
             { status: 429 }
           );
         default:
           return NextResponse.json(
-            { error: "Hava durumu verisi alınamadı" },
+            { error: "Failed to fetch weather data" },
             { status: response.status }
           );
       }
@@ -67,18 +69,18 @@ export async function GET(request: Request) {
     const data = await response.json();
     
     if (!data || Object.keys(data).length === 0) {
-      console.error("Boş veri alındı:", { lat, lon, units });
+      console.error("Empty data received:", { lat, lon, units });
       return NextResponse.json(
-        { error: "Hava durumu verisi alınamadı" },
+        { error: "No weather data available" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Hava durumu API hatası:", error);
+    console.error("Weather API Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Hava durumu verisi alınamadı" },
+      { error: error instanceof Error ? error.message : "Failed to fetch weather data" },
       { status: 500 }
     );
   }

@@ -49,7 +49,7 @@ export const useSettingsStore = create<SettingsState>()(
             units: newUnits,
             currentToast: {
               id: Math.random().toString(36).substring(7),
-              message: `Sıcaklık birimi ${newUnits === "metric" ? "Celsius" : "Fahrenheit"} olarak değiştirildi`,
+              message: `Temperature unit changed to ${newUnits === "metric" ? "Celsius" : "Fahrenheit"}`,
               type: "info",
             },
           };
@@ -60,7 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
           units: unit,
           currentToast: {
             id: Math.random().toString(36).substring(7),
-            message: `Sıcaklık birimi ${unit === "metric" ? "Celsius" : "Fahrenheit"} olarak değiştirildi`,
+            message: `Temperature unit changed to ${unit === "metric" ? "Celsius" : "Fahrenheit"}`,
             type: "info",
           },
         })),
@@ -72,7 +72,7 @@ export const useSettingsStore = create<SettingsState>()(
             theme: newTheme,
             currentToast: {
               id: Math.random().toString(36).substring(7),
-              message: `Tema ${newTheme === "light" ? "açık" : "koyu"} olarak değiştirildi`,
+              message: `Theme changed to ${newTheme === "light" ? "light" : "dark"} mode`,
               type: "info",
             },
           };
@@ -83,7 +83,7 @@ export const useSettingsStore = create<SettingsState>()(
           theme,
           currentToast: {
             id: Math.random().toString(36).substring(7),
-            message: `Tema ${theme === "light" ? "açık" : "koyu"} olarak değiştirildi`,
+            message: `Theme changed to ${theme === "light" ? "light" : "dark"} mode`,
             type: "info",
           },
         })),
@@ -93,7 +93,7 @@ export const useSettingsStore = create<SettingsState>()(
           selectedCity: city,
           currentToast: {
             id: Math.random().toString(36).substring(7),
-            message: `${city?.name} için hava durumu bilgileri güncellendi`,
+            message: `Weather information updated for ${city?.name}`,
             type: "success",
           },
         })),
