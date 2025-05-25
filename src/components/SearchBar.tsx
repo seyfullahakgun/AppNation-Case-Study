@@ -11,15 +11,15 @@ import { api } from "@/lib/axios";
 
 const RECENT_SEARCHES_KEY = "recentSearches";
 
-const SearchBar = () => {
+export default function SearchBar() {
+  const { selectedCity, setSelectedCity, theme, showToast } = useSettingsStore();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
   const [debouncedValue, setDebouncedValue] = useState("");
   const [recentSearches, setRecentSearches] = useState<City[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  const { selectedCity, setSelectedCity } = useSettingsStore();
-  const { theme } = useSettingsStore();
 
   // localStorage'dan recentSearches'i yükle
   useEffect(() => {
@@ -41,18 +41,18 @@ const SearchBar = () => {
   // Initialize search value with selected city
   useEffect(() => {
     if (selectedCity) {
-      setSearchValue(selectedCity.name);
+      setSearchQuery(selectedCity.name);
     }
   }, [selectedCity]);
 
   // Debounce process
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedValue(searchValue);
+      setDebouncedValue(searchQuery);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchValue]);
+  }, [searchQuery]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -64,7 +64,7 @@ const SearchBar = () => {
         setIsOpen(false);
         // Always restore the selected city name when clicking outside
         if (selectedCity) {
-          setSearchValue(selectedCity.name);
+          setSearchQuery(selectedCity.name);
         }
       }
     };
@@ -76,8 +76,8 @@ const SearchBar = () => {
   // City search query with Axios
   const {
     data: cities,
-    isLoading,
-    error,
+    isLoading: citiesLoading,
+    error: citiesError,
   } = useQuery({
     queryKey: ["cities", debouncedValue],
     queryFn: async () => {
@@ -97,9 +97,54 @@ const SearchBar = () => {
     enabled: debouncedValue.length > 0,
   });
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
+          searchQuery
+        )}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Şehir bulunamadı");
+      }
+
+      const data = await response.json();
+
+      if (data.length === 0) {
+        throw new Error("Şehir bulunamadı");
+      }
+
+      const city = {
+        name: data[0].name,
+        country: data[0].country,
+        lat: data[0].lat,
+        lon: data[0].lon,
+        state: data[0].state || data[0].name,
+      };
+
+      setSelectedCity(city);
+      setSearchQuery("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      showToast({
+        message: err instanceof Error ? err.message : "Bir hata oluştu",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCitySelect = (city: City) => {
     setSelectedCity(city);
-    setSearchValue(city.name);
+    setSearchQuery(city.name);
     setRecentSearches((prev) => {
       const newSearches = [
         city,
@@ -114,12 +159,12 @@ const SearchBar = () => {
     setIsOpen(true);
     // Clear input only if there's a selected city
     if (selectedCity) {
-      setSearchValue("");
+      setSearchQuery("");
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(e.target.value);
+    setSearchQuery(e.target.value);
   };
 
   return (
@@ -127,7 +172,7 @@ const SearchBar = () => {
       <div className="relative">
         <input
           type="text"
-          value={searchValue}
+          value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder="Search for a city..."
@@ -163,7 +208,7 @@ const SearchBar = () => {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute w-full mt-2 p-2 text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-400"
           >
-            {searchValue ? (
+            {searchQuery ? (
               <>
                 {isLoading && (
                   <div className="p-4 text-center text-secondary">
@@ -172,14 +217,12 @@ const SearchBar = () => {
                 )}
                 {error && (
                   <div className="p-4 text-center text-red-500">
-                    {error instanceof Error
-                      ? error.message
-                      : "An error occurred"}
+                    {error}
                   </div>
                 )}
                 {!isLoading && !error && cities?.length === 0 && (
                   <div className="p-4 text-center text-secondary">
-                    No results found for "{searchValue}"
+                    No results found for "{searchQuery}"
                   </div>
                 )}
                 {cities?.map((city: City, index: number) => (
@@ -240,6 +283,4 @@ const SearchBar = () => {
       </AnimatePresence>
     </div>
   );
-};
-
-export default SearchBar;
+}

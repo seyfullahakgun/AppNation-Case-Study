@@ -2,6 +2,15 @@ export type Unit = "metric" | "imperial";
 
 export type Theme = "light" | "dark";
 
+type ToastType = "success" | "error" | "info";
+
+interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+}
+
 export interface City {
   name: string;
   country: string;

@@ -1,24 +1,34 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Unit, Theme, City } from "./types";
+import { Unit, Theme, City, Toast } from "./types";
 
 interface SettingsState {
+  // Settings
   units: Unit;
   theme: Theme;
   selectedCity: City | null;
+  
+  // Toast
+  currentToast: Toast | null;
+  
+  // Settings Actions
   toggleUnits: () => void;
   setUnits: (unit: Unit) => void;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
   setSelectedCity: (city: City | null) => void;
+  
+  // Toast Actions
+  showToast: (toast: Omit<Toast, "id">) => void;
+  hideToast: () => void;
 }
 
 // Persist edilen ayarlar store'u
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      // Varsayılan değerler: Celsius ve Dark tema
-      units: "metric", // metric = °C
+      // Settings
+      units: "metric",
       theme: "dark",
       selectedCity: {
         name: "Istanbul",
@@ -27,26 +37,82 @@ export const useSettingsStore = create<SettingsState>()(
         lon: 28.9784,
         state: "Istanbul"
       },
+      
+      // Toast
+      currentToast: null,
 
+      // Settings Actions
       toggleUnits: () =>
+        set((state) => {
+          const newUnits = state.units === "metric" ? "imperial" : "metric";
+          return {
+            units: newUnits,
+            currentToast: {
+              id: Math.random().toString(36).substring(7),
+              message: `Sıcaklık birimi ${newUnits === "metric" ? "Celsius" : "Fahrenheit"} olarak değiştirildi`,
+              type: "info",
+            },
+          };
+        }),
+        
+      setUnits: (unit) =>
         set((state) => ({
-          units: state.units === "metric" ? "imperial" : "metric",
+          units: unit,
+          currentToast: {
+            id: Math.random().toString(36).substring(7),
+            message: `Sıcaklık birimi ${unit === "metric" ? "Celsius" : "Fahrenheit"} olarak değiştirildi`,
+            type: "info",
+          },
         })),
-      setUnits: (unit) => set({ units: unit }),
 
       toggleTheme: () =>
-        set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
-      setTheme: (theme) => set({ theme }),
+        set((state) => {
+          const newTheme = state.theme === "light" ? "dark" : "light";
+          return {
+            theme: newTheme,
+            currentToast: {
+              id: Math.random().toString(36).substring(7),
+              message: `Tema ${newTheme === "light" ? "açık" : "koyu"} olarak değiştirildi`,
+              type: "info",
+            },
+          };
+        }),
+        
+      setTheme: (theme) =>
+        set((state) => ({
+          theme,
+          currentToast: {
+            id: Math.random().toString(36).substring(7),
+            message: `Tema ${theme === "light" ? "açık" : "koyu"} olarak değiştirildi`,
+            type: "info",
+          },
+        })),
 
-      setSelectedCity: (city) => set({ selectedCity: city }),
+      setSelectedCity: (city) =>
+        set((state) => ({
+          selectedCity: city,
+          currentToast: {
+            id: Math.random().toString(36).substring(7),
+            message: `${city?.name} için hava durumu bilgileri güncellendi`,
+            type: "success",
+          },
+        })),
+
+      // Toast Actions
+      showToast: (toast) =>
+        set({
+          currentToast: { ...toast, id: Math.random().toString(36).substring(7) },
+        }),
+        
+      hideToast: () =>
+        set({ currentToast: null }),
     }),
     {
-      name: "weather-dashboard-settings", // localStorage key
-      // persist sadece units, theme ve selectedCity alanlarını saklar
-      partialize: (state) => ({ 
-        units: state.units, 
+      name: "weather-dashboard-settings",
+      partialize: (state) => ({
+        units: state.units,
         theme: state.theme,
-        selectedCity: state.selectedCity 
+        selectedCity: state.selectedCity,
       }),
     }
   )
