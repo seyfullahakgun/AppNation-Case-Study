@@ -22,7 +22,10 @@ export default function CurrentWeatherCard({ data }: CurrentWeatherCardProps) {
   });
 
   return (
-    <Card title="Current Weather" className="p-6">
+    <Card
+      title="Current Weather"
+      className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white"
+    >
       <div className="flex flex-col justify-between h-full space-y-6">
         {/* Şehir Bilgileri */}
         <div className="flex flex-col">

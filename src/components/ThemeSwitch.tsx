@@ -1,6 +1,3 @@
-/*
-  components/ThemeSwitch.tsx
-*/
 "use client";
 
 import React, { useEffect } from "react";
@@ -11,12 +8,22 @@ const ThemeSwitch: React.FC = () => {
   const { theme, toggleTheme } = useSettingsStore();
 
   useEffect(() => {
-    // Tema değiştiğinde HTML elementine data-theme attribute'unu ekle/kaldır
-    document.documentElement.setAttribute('data-theme', theme);
+    // Sayfa yüklendiğinde veya tema değiştiğinde
+    document.documentElement.classList.toggle(
+      "dark",
+      theme === "dark" || (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
+    );
+
+    // Tema tercihini localStorage'a kaydet
+    if (theme === "dark") {
+      localStorage.theme = "dark";
+    } else {
+      localStorage.theme = "light";
+    }
   }, [theme]);
 
   return (
-    <label className="relative inline-block w-12 h-7 rounded-full shadow-lg overflow-hidden">
+    <label className="relative inline-block w-12 h-7 rounded-full shadow-lg overflow-hidden cursor-pointer">
       <input
         type="checkbox"
         checked={theme !== "dark"}

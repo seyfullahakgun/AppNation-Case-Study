@@ -59,7 +59,7 @@ export default function WeatherAlertCard({ data }: WeatherAlertCardProps) {
                   {/* Uyarı İkonu */}
                   <div className={`p-2 rounded-full ${styles.bgColor}`}>
                     <Image
-                      src={`/icons/${styles.icon}-${theme === "dark" ? "light" : "dark"}.svg`}
+                      src={`/icons/warning-${theme === "dark" ? "light" : "dark"}.svg`}
                       alt={alert.event}
                       width={24}
                       height={24}

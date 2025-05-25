@@ -13,7 +13,6 @@ const RECENT_SEARCHES_KEY = "recentSearches";
 
 const SearchBar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [debouncedValue, setDebouncedValue] = useState("");
   const [recentSearches, setRecentSearches] = useState<City[]>([]);
@@ -21,18 +20,6 @@ const SearchBar = () => {
 
   const { selectedCity, setSelectedCity } = useSettingsStore();
   const { theme } = useSettingsStore();
-
-  // Dropdown görünürlük kontrolü
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-    } else {
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, 300); // Animasyon süresi kadar bekle
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
 
   // localStorage'dan recentSearches'i yükle
   useEffect(() => {
@@ -144,7 +131,7 @@ const SearchBar = () => {
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           placeholder="Search for a city..."
-          className="w-full px-4 py-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card-background text-card-foreground border-border-light dark:border-border-light"
+          className="w-full px-4 py-2 pl-10 text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary border border-gray-200 dark:border-gray-400 transition-all duration-300"
         />
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
           {theme === "dark" ? (
@@ -174,16 +161,20 @@ const SearchBar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute w-full mt-2 bg-card-background text-card-foreground border border-border-light dark:border-border-light rounded-lg shadow-lg"
+            className="absolute w-full mt-2 p-2 text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-400"
           >
             {searchValue ? (
               <>
                 {isLoading && (
-                  <div className="p-4 text-center text-secondary">Loading...</div>
+                  <div className="p-4 text-center text-secondary">
+                    Loading...
+                  </div>
                 )}
                 {error && (
                   <div className="p-4 text-center text-red-500">
-                    {error instanceof Error ? error.message : "An error occurred"}
+                    {error instanceof Error
+                      ? error.message
+                      : "An error occurred"}
                   </div>
                 )}
                 {!isLoading && !error && cities?.length === 0 && (
@@ -198,7 +189,7 @@ const SearchBar = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                     onClick={() => handleCitySelect(city)}
-                    className="w-full px-4 py-2 text-left hover:bg-border-light dark:hover:bg-border-light flex items-center gap-2 text-foreground cursor-pointer"
+                    className="w-full px-4 py-2 text-left rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-2 text-foreground cursor-pointer"
                   >
                     <Image
                       src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
@@ -214,7 +205,7 @@ const SearchBar = () => {
                 ))}
               </>
             ) : (
-              <div className="p-2">
+              <>
                 <h3 className="px-2 py-1 text-sm font-semibold text-secondary">
                   Recent Searches
                 </h3>
@@ -230,7 +221,7 @@ const SearchBar = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
                       onClick={() => handleCitySelect(city)}
-                      className="w-full px-4 py-2 text-left hover:bg-border-light dark:hover:bg-border-light flex items-center gap-2 text-card-foreground cursor-pointer"
+                      className="w-full px-4 py-2 text-left rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-2 text-card-foreground cursor-pointer"
                     >
                       <Image
                         src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
@@ -242,7 +233,7 @@ const SearchBar = () => {
                     </motion.button>
                   ))
                 )}
-              </div>
+              </>
             )}
           </motion.div>
         )}
