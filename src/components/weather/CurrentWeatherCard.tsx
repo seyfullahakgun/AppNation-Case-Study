@@ -1,92 +1,136 @@
 "use client";
 
 import Card from "@/components/ui/Card";
-import { useSettingsStore } from "@/store";
 import Image from "next/image";
-import { useWeatherIcon } from "@/hooks/useWeatherIcon";
+import { useSettingsStore } from "@/store";
 import { useWeather } from "@/hooks/useWeather";
+import { useWeatherIcon } from "@/hooks/useWeatherIcon";
 import Skeleton from "@/components/ui/Skeleton";
+import type { CurrentWeather, City } from "@/types";
 
+// ------------- Ana komponent -------------
 export default function CurrentWeatherCard() {
   const { units, selectedCity } = useSettingsStore();
   const { data, isLoading } = useWeather(selectedCity);
 
+  // Şehir seçimi yoksa hata
+  if (!selectedCity) {
+    return <ErrorCard message="Şehir seçilmedi." />;
+  }
+
   if (isLoading) {
-    return (
-      <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white h-full w-full">
-        <div className="flex flex-col justify-between h-full space-y-6">
-          {/* Şehir Bilgileri Skeleton */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-8 h-6" />
+    return <LoadingSkeleton />;
+  }
+  if (!data?.current) {
+    return <ErrorCard />;
+  }
+
+  return (
+    <ContentCard
+      current={data.current}
+      units={units}
+      selectedCity={selectedCity}
+      timezoneOffset={data.timezone_offset}
+    />
+  );
+}
+// ------------- Alt-komponentler -------------
+
+function LoadingSkeleton() {
+  return (
+    <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white h-full w-full">
+      <div className="flex flex-col justify-between h-full space-y-6">
+        {/* City Information Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-8 h-6" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="w-32 h-8" />
+              <Skeleton className="w-24 h-4" />
+            </div>
+          </div>
+          <Skeleton className="w-16 h-4" />
+        </div>
+
+        {/* Weather and Temperature Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-20 h-20" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="w-24 h-12" />
+              <Skeleton className="w-32 h-6" />
+            </div>
+          </div>
+        </div>
+
+        {/* Details Skeleton */}
+        <div className="grid grid-cols-2 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-4 bg-white/20 rounded-lg p-3"
+            >
+              <Skeleton className="w-6 h-6" />
               <div className="flex flex-col gap-2">
-                <Skeleton className="w-32 h-8" />
-                <Skeleton className="w-24 h-4" />
+                <Skeleton className="w-16 h-4" />
+                <Skeleton className="w-12 h-4" />
               </div>
             </div>
+          ))}
+        </div>
+
+        {/* Sunrise/Sunset Skeleton */}
+        <div className="flex items-center justify-between mt-2 border-t border-white/20 pt-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-6 h-6" />
             <Skeleton className="w-16 h-4" />
           </div>
-
-          {/* Hava Durumu ve Sıcaklık Skeleton */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Skeleton className="w-20 h-20" />
-              <div className="flex flex-col gap-2">
-                <Skeleton className="w-24 h-12" />
-                <Skeleton className="w-32 h-6" />
-              </div>
-            </div>
-          </div>
-
-          {/* Detaylar Skeleton */}
-          <div className="grid grid-cols-2 gap-4">
-            {[...Array(4)].map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 bg-white/20 rounded-lg p-3"
-              >
-                <Skeleton className="w-6 h-6" />
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="w-16 h-4" />
-                  <Skeleton className="w-12 h-4" />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Gün Doğumu/Batımı Skeleton */}
-          <div className="flex items-center justify-between mt-2 border-t border-white/20 pt-4">
-            <div className="flex items-center gap-4">
-              <Skeleton className="w-6 h-6" />
-              <Skeleton className="w-16 h-4" />
-            </div>
-            <div className="flex items-center gap-4">
-              <Skeleton className="w-6 h-6" />
-              <Skeleton className="w-16 h-4" />
-            </div>
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-6 h-6" />
+            <Skeleton className="w-16 h-4" />
           </div>
         </div>
-      </Card>
-    );
-  }
+      </div>
+    </Card>
+  );
+}
 
-  if (!data || !data.current) {
-    return (
-      <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white h-full w-full">
-        <div className="flex items-center justify-center h-48">
-          <p>Hava durumu bilgisi bulunamadı.</p>
-        </div>
-      </Card>
-    );
-  }
+interface ErrorCardProps {
+  message?: string;
+}
+function ErrorCard({
+  message = "Hava durumu bilgisi bulunamadı.",
+}: ErrorCardProps) {
+  return (
+    <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white h-full w-full">
+      <div className="flex items-center justify-center h-48">
+        <p>{message}</p>
+      </div>
+    </Card>
+  );
+}
 
-  const current = data.current;
+interface ContentCardProps {
+  current: CurrentWeather;
+  units: string;
+  selectedCity: City;
+  timezoneOffset: number;
+}
+
+function ContentCard({
+  current,
+  selectedCity,
+  units,
+}: ContentCardProps) {
+  // Burada Hook hep aynı sırada çağrılıyor
   const { iconPath } = useWeatherIcon(current.weather[0]);
-  const localTime = new Date(current.dt * 1000).toLocaleTimeString("en-US", {
+
+  const localTime = new Date(current.dt * 1000).toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Istanbul",
   });
+
   return (
     <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white h-full w-full">
       <div className="flex flex-col justify-between h-full space-y-6">
@@ -94,19 +138,19 @@ export default function CurrentWeatherCard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
-              src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${selectedCity?.country}.svg`}
-              alt={selectedCity?.country || ""}
+              src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${selectedCity.country}.svg`}
+              alt={selectedCity.country || ""}
               width={32}
               height={24}
               className="rounded-sm"
             />
             <div className="flex items-end gap-2">
               <h2 className="text-2xl font-bold uppercase">
-                {selectedCity?.name}
+                {selectedCity.name}
               </h2>
               <p className="text-secondary capitalize">
-                {selectedCity?.state && `${selectedCity.state}, `}
-                {selectedCity?.country}
+                {selectedCity.state && `${selectedCity.state}, `}
+                {selectedCity.country}
               </p>
             </div>
           </div>
@@ -204,9 +248,7 @@ export default function CurrentWeatherCard() {
               height={24}
             />
             <p className="text-sm">
-              {new Date(
-                (current.sunrise + data.timezone_offset) * 1000
-              ).toLocaleTimeString("en-US", {
+              {new Date(current.sunrise * 1000).toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
                 timeZone: "Europe/Istanbul",
@@ -221,9 +263,7 @@ export default function CurrentWeatherCard() {
               height={24}
             />
             <p className="text-sm">
-              {new Date(
-                (current.sunset + data.timezone_offset) * 1000
-              ).toLocaleTimeString("en-US", {
+              {new Date(current.sunset * 1000).toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
                 timeZone: "Europe/Istanbul",
