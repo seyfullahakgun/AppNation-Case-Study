@@ -56,7 +56,7 @@ export default function Toast({
 
   return (
     <div
-      className={`fixed z-50 flex items-center gap-3 px-4 py-3 rounded-lg border text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-400 ${
+      className={`fixed z-[2000] flex items-center gap-3 px-4 py-3 rounded-lg border text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-400 ${
         isVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
       } md:bottom-6 md:right-0 md:left-auto md:w-auto left-1/2 bottom-6 -translate-x-1/2 w-[calc(100%-2rem)]`}
     >

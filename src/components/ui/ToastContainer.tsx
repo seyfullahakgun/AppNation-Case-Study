@@ -9,7 +9,7 @@ export default function ToastContainer() {
   if (!currentToast) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed inset-0 pointer-events-none z-[2000]">
       <Toast
         key={currentToast.id}
         message={currentToast.message}
