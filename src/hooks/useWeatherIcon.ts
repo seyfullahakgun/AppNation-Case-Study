@@ -80,7 +80,7 @@ export function useWeatherIcon(weather: { id: number; description: string }) {
   const iconName = weatherIcons[weather.id] || defaultIcon;
 
   // Create icon path
-  const iconPath = `/icons/weather/${iconName}.svg`;
+  const iconPath = `/images/${iconName}.svg`;
 
   return { iconPath };
 } 

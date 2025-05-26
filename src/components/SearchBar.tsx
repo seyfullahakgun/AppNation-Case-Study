@@ -23,6 +23,7 @@ export default function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState("");
   const [recentSearches, setRecentSearches] = useState<City[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Memoize handlers
@@ -108,6 +109,7 @@ export default function SearchBar() {
 
   // Debounce search
   useEffect(() => {
+    setErrorMessage("");
     const timer = setTimeout(() => {
       setDebouncedValue(searchQuery);
     }, 300);
@@ -134,7 +136,7 @@ export default function SearchBar() {
   }, [selectedCity]);
 
   // City search query
-  const { data: cities } = useQuery({
+  const { data: cities, isPending } = useQuery({
     queryKey: ["cities", debouncedValue],
     queryFn: async () => {
       if (!debouncedValue) return [];
@@ -143,8 +145,8 @@ export default function SearchBar() {
         return data;
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          const errorMessage =
-            error.response?.data?.message || "Failed to fetch cities";
+          const errorMessage = error.message || "Failed to fetch cities";
+          setErrorMessage(errorMessage);
           showToast({
             message: errorMessage,
             type: "error",
@@ -152,9 +154,17 @@ export default function SearchBar() {
           throw new Error(errorMessage);
         }
         showToast({
-          message: "An unexpected error occurred",
+          message:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred",
           type: "error",
         });
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred"
+        );
         throw error;
       }
     },
@@ -184,29 +194,49 @@ export default function SearchBar() {
       >
         {searchQuery ? (
           <>
-            {cities?.length === 0 && (
+            {errorMessage ? (
+              <div className="p-4 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <Image
+                    src="/icons/danger.svg"
+                    alt="Error"
+                    width={20}
+                    height={20}
+                  />
+                  <span>{errorMessage}</span>
+                </div>
+              </div>
+            ) : isPending ? (
+              <div className="p-4 text-center text-secondary">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span>Searching...</span>
+                </div>
+              </div>
+            ) : cities?.length === 0 ? (
               <div className="p-4 text-center text-secondary">
                 No results found for {searchQuery}
               </div>
+            ) : (
+              cities?.map((city: City, index: number) => (
+                <button
+                  key={`${city.name}-${city.country}-${index}`}
+                  onClick={() => handleCitySelect(city)}
+                  className="w-full px-4 py-2 text-left rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-2 text-foreground cursor-pointer"
+                >
+                  <Image
+                    src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
+                    alt={city.country}
+                    width={24}
+                    height={16}
+                  />
+                  <span>{city.name}</span>
+                  {city.state && (
+                    <span className="text-secondary">({city.state})</span>
+                  )}
+                </button>
+              ))
             )}
-            {cities?.map((city: City, index: number) => (
-              <button
-                key={`${city.name}-${city.country}-${index}`}
-                onClick={() => handleCitySelect(city)}
-                className="w-full px-4 py-2 text-left rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-2 text-foreground cursor-pointer"
-              >
-                <Image
-                  src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${city.country}.svg`}
-                  alt={city.country}
-                  width={24}
-                  height={16}
-                />
-                <span>{city.name}</span>
-                {city.state && (
-                  <span className="text-secondary">({city.state})</span>
-                )}
-              </button>
-            ))}
           </>
         ) : (
           <>

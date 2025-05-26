@@ -16,7 +16,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error("İstek Hatası:", error.message);
+    console.error("Request Error:", error.message);
     return Promise.reject(error);
   }
 );
@@ -28,6 +28,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    console.log(error);
     // Operations to perform for error responses
     if (axios.isAxiosError(error)) {
       if (error.response) {
@@ -35,13 +36,12 @@ api.interceptors.response.use(
         const status = error.response.status;
         const errorData = error.response.data;
 
-        console.error("API Error:", {
-          status,
-          message: errorData?.message || errorData?.error || "Server error",
-          details: errorData,
-        });
+        // If API returns a custom error message, use it
+        if (errorData?.message || errorData?.error) {
+          throw new Error(errorData.message || errorData.error);
+        }
 
-        // Special error messages
+        // Special error messages for common status codes
         switch (status) {
           case 400:
             throw new Error("Invalid request. Please check your inputs.");
@@ -54,7 +54,7 @@ api.interceptors.response.use(
           case 500:
             throw new Error("Server error. Please try again later.");
           default:
-            throw new Error(errorData?.message || "Unexpected error occurred.");
+            throw new Error("An unexpected error occurred.");
         }
       } else if (error.request) {
         // Request was made but no response was received

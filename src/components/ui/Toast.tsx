@@ -14,7 +14,7 @@ interface ToastProps {
 
 const icons = {
   success: "/icons/check.svg",
-  error: "/icons/warning.svg",
+  error: "/icons/danger.svg",
   info: "/icons/info.svg",
 };
 
