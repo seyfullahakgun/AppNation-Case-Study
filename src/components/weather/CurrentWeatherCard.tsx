@@ -7,6 +7,7 @@ import { useWeather } from "@/hooks/useWeather";
 import { useWeatherIcon } from "@/hooks/useWeatherIcon";
 import Skeleton from "@/components/ui/Skeleton";
 import type { CurrentWeather, City } from "@/types";
+import moment from "moment-timezone";
 
 // ------------- Ana komponent -------------
 export default function CurrentWeatherCard() {
@@ -121,20 +122,53 @@ function ContentCard({
   current,
   selectedCity,
   units,
+  timezoneOffset,
 }: ContentCardProps) {
-  // Burada Hook hep aynı sırada çağrılıyor
   const { iconPath } = useWeatherIcon(current.weather[0]);
 
-  const localTime = new Date(current.dt * 1000).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Istanbul",
-  });
+  // Get UTC offset in hours (API provides in seconds)
+  const offsetInHours = timezoneOffset / 3600;
+  
+  // Determine timezone based on offset
+  const getTimezoneFromOffset = (offset: number) => {
+    // Get all timezones from moment-timezone
+    const allTimezones = moment.tz.names();
+    
+    // Filter timezones by offset
+    const matchingTimezones = allTimezones.filter(tz => {
+      const tzOffset = moment.tz(tz).utcOffset() / 60; // Convert to hours
+      return tzOffset === offset;
+    });
+
+    // If matching timezones found, return the first one
+    if (matchingTimezones.length > 0) {
+      // First filter by country code
+      const countryTimezones = matchingTimezones.filter(tz => 
+        tz.toLowerCase().includes(selectedCity.country.toLowerCase())
+      );
+      
+      // Use country-specific timezone if found, otherwise use first matching timezone
+      return countryTimezones.length > 0 ? countryTimezones[0] : matchingTimezones[0];
+    }
+
+    // Fallback to UTC if no match found
+    return "UTC";
+  };
+
+  const timezone = getTimezoneFromOffset(offsetInHours);
+
+  // Calculate local time for the city
+  const localTime = moment.unix(current.dt).tz(timezone).format("hh:mm A");
+
+  // Helper function for sunrise and sunset times
+  const formatTime = (timestamp: number) => {
+    return moment.unix(timestamp).tz(timezone).format("hh:mm A");
+  };
 
   return (
     <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white h-full w-full">
       <div className="flex flex-col justify-between h-full space-y-6">
-        {/* Şehir Bilgileri */}
+        {/* City Information */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Image
@@ -155,11 +189,11 @@ function ContentCard({
             </div>
           </div>
 
-          {/* Saat */}
+          {/* Time */}
           <p className="text-secondary text-sm">{localTime}</p>
         </div>
 
-        {/* Hava Durumu ve Sıcaklık */}
+        {/* Weather and Temperature */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Image
@@ -180,12 +214,12 @@ function ContentCard({
           </div>
         </div>
 
-        {/* Detaylar */}
+        {/* Details */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center gap-4 bg-white/20 rounded-lg p-3">
             <Image
               src={"/icons/wind-light.svg"}
-              alt="Rüzgar"
+              alt="Wind"
               width={24}
               height={24}
             />
@@ -199,7 +233,7 @@ function ContentCard({
           <div className="flex items-center gap-4 bg-white/20 rounded-lg p-3">
             <Image
               src={"/icons/moisture-light.svg"}
-              alt="Nem"
+              alt="Humidity"
               width={24}
               height={24}
             />
@@ -211,7 +245,7 @@ function ContentCard({
           <div className="flex items-center gap-4 bg-white/20 rounded-lg p-3">
             <Image
               src={"/icons/temperature-light.svg"}
-              alt="Hissedilen"
+              alt="Feels Like"
               width={24}
               height={24}
             />
@@ -226,7 +260,7 @@ function ContentCard({
           <div className="flex items-center gap-4 bg-white/20 rounded-lg p-3">
             <Image
               src={"/icons/visibility.svg"}
-              alt="Gün Doğumu"
+              alt="Visibility"
               width={24}
               height={24}
             />
@@ -239,35 +273,28 @@ function ContentCard({
           </div>
         </div>
 
+        {/* Sunrise and Sunset */}
         <div className="flex items-center justify-between mt-2 border-t border-white/20 pt-4">
           <div className="flex items-center gap-4">
             <Image
               src={"/icons/sunrise-light.svg"}
-              alt="Gün Doğumu"
+              alt="Sunrise"
               width={24}
               height={24}
             />
             <p className="text-sm">
-              {new Date(current.sunrise * 1000).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "Europe/Istanbul",
-              })}
+              {formatTime(current.sunrise)}
             </p>
           </div>
           <div className="flex items-center gap-4">
             <Image
               src={"/icons/sunset.svg"}
-              alt="Gün Batımı"
+              alt="Sunset"
               width={24}
               height={24}
             />
             <p className="text-sm">
-              {new Date(current.sunset * 1000).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "Europe/Istanbul",
-              })}
+              {formatTime(current.sunset)}
             </p>
           </div>
         </div>
