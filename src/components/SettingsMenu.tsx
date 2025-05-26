@@ -47,16 +47,18 @@ const SettingsMenu: React.FC = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-48 bg-card-background border border-border-light rounded-lg shadow-lg p-4 space-y-4"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute right-0 mt-2 w-48 p-2 text-gray-600 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-400"
           >
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-sm font-medium text-secondary">Unit</label>
-              <UnitSwitch />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-sm font-medium text-secondary">Theme</label>
-              <ThemeSwitch />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2 px-2 py-1">
+                <label className="text-sm font-medium text-secondary">Unit</label>
+                <UnitSwitch />
+              </div>
+              <div className="flex items-center justify-between gap-2 px-2 py-1">
+                <label className="text-sm font-medium text-secondary">Theme</label>
+                <ThemeSwitch />
+              </div>
             </div>
           </motion.div>
         )}
