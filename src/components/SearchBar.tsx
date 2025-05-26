@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import axios from "axios";
@@ -12,19 +18,21 @@ import { api } from "@/lib/axios";
 const RECENT_SEARCHES_KEY = "recentSearches";
 
 export default function SearchBar() {
-  const { selectedCity, setSelectedCity, theme, showToast } = useSettingsStore();
+  const { selectedCity, setSelectedCity, theme, showToast } =
+    useSettingsStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState("");
   const [recentSearches, setRecentSearches] = useState<City[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Memoize handlers
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    },
+    []
+  );
 
   const handleInputFocus = useCallback(() => {
     setIsOpen(true);
@@ -33,41 +41,47 @@ export default function SearchBar() {
     }
   }, [selectedCity]);
 
-  const handleCitySelect = useCallback((city: City) => {
-    setSelectedCity(city);
-    setSearchQuery(city.name);
-    setRecentSearches((prev) => {
-      const newSearches = [
-        city,
-        ...prev.filter((c) => c.name !== city.name),
-      ].slice(0, 5);
-      return newSearches;
-    });
-    setIsOpen(false);
-  }, [setSelectedCity]);
+  const handleCitySelect = useCallback(
+    (city: City) => {
+      setSelectedCity(city);
+      setSearchQuery(city.name);
+      setRecentSearches((prev) => {
+        const newSearches = [
+          city,
+          ...prev.filter((c) => c.name !== city.name),
+        ].slice(0, 5);
+        return newSearches;
+      });
+      setIsOpen(false);
+    },
+    [setSelectedCity]
+  );
 
   // Memoize search icon
-  const searchIcon = useMemo(() => (
-    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
-      {theme === "dark" ? (
-        <Image
-          src="/icons/search-light.svg"
-          alt="Search"
-          width={20}
-          height={20}
-          className="opacity-50"
-        />
-      ) : (
-        <Image
-          src="/icons/search-dark.svg"
-          alt="Search"
-          width={20}
-          height={20}
-          className="opacity-50"
-        />
-      )}
-    </div>
-  ), [theme]);
+  const searchIcon = useMemo(
+    () => (
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary">
+        {theme === "dark" ? (
+          <Image
+            src="/icons/search-light.svg"
+            alt="Search"
+            width={20}
+            height={20}
+            className="opacity-50"
+          />
+        ) : (
+          <Image
+            src="/icons/search-dark.svg"
+            alt="Search"
+            width={20}
+            height={20}
+            className="opacity-50"
+          />
+        )}
+      </div>
+    ),
+    [theme]
+  );
 
   // Load recent searches
   useEffect(() => {
@@ -121,9 +135,7 @@ export default function SearchBar() {
   }, [selectedCity]);
 
   // City search query
-  const {
-    data: cities,
-  } = useQuery({
+  const { data: cities } = useQuery({
     queryKey: ["cities", debouncedValue],
     queryFn: async () => {
       if (!debouncedValue) return [];
@@ -132,7 +144,8 @@ export default function SearchBar() {
         return data;
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          const errorMessage = error.response?.data?.message || "Failed to fetch cities";
+          const errorMessage =
+            error.response?.data?.message || "Failed to fetch cities";
           showToast({
             message: errorMessage,
             type: "error",
@@ -174,17 +187,7 @@ export default function SearchBar() {
           >
             {searchQuery ? (
               <>
-                {isLoading && (
-                  <div className="p-4 text-center text-secondary">
-                    Loading...
-                  </div>
-                )}
-                {error && (
-                  <div className="p-4 text-center text-red-500">
-                    {error}
-                  </div>
-                )}
-                {!isLoading && !error && cities?.length === 0 && (
+                {cities?.length === 0 && (
                   <div className="p-4 text-center text-secondary">
                     No results found for {searchQuery}
                   </div>
