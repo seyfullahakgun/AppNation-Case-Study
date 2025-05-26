@@ -18,15 +18,15 @@ export const useWeather = (city: City | null) => {
         return data;
       } catch (error) {
         if (error instanceof Error) {
-          throw new Error(`Hava durumu verisi alınamadı: ${error.message}`);
+          throw new Error(`Failed to fetch weather data: ${error.message}`);
         }
-        throw new Error("Hava durumu verisi alınamadı");
+        throw new Error("Failed to fetch weather data");
       }
     },
     enabled: !!city,
-    staleTime: 1000 * 60 * 5, // 5 dakika
-    refetchInterval: 1000 * 60 * 5, // Her 5 dakikada bir yenile
-    retry: 2, // Hata durumunda 2 kez daha dene
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Üstel geri çekilme
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 1000 * 60 * 5, // Refresh every 5 minutes
+    retry: 2, // Retry 2 more times on error
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 }; 

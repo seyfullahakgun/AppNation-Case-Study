@@ -1,6 +1,6 @@
 import { WeatherCondition } from "@/types";
 
-// Hava durumu kodlarına göre ikon eşleştirmeleri
+// Weather icon mappings based on weather codes
 const weatherIcons: Record<number, string> = {
   // Group 2xx: Thunderstorm
   200: "thunderstorm",
@@ -72,18 +72,15 @@ const weatherIcons: Record<number, string> = {
   804: "broken-clouds",
 };
 
-export const useWeatherIcon = (weather: WeatherCondition) => {
-  // Varsayılan ikon
-  const defaultIcon = "clear";
+// Default icon
+const defaultIcon = "clear";
 
-  // Hava durumu koduna göre ikon adını al
+export function useWeatherIcon(weather: { id: number; description: string }) {
+  // Get icon name based on weather code
   const iconName = weatherIcons[weather.id] || defaultIcon;
 
-  // İkon yolunu oluştur
-  const iconPath = `/images/${iconName}.svg`;
+  // Create icon path
+  const iconPath = `/icons/weather/${iconName}.svg`;
 
-  return {
-    iconPath,
-    iconName,
-  };
-}; 
+  return { iconPath };
+} 

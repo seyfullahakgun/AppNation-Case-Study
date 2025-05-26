@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// Axios instance oluştur
+// Create Axios instance
 export const api = axios.create({
   baseURL: "/api",
   timeout: 5000,
@@ -9,10 +9,10 @@ export const api = axios.create({
   },
 });
 
-// İstek interceptor'ı
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // İstek gönderilmeden önce yapılacak işlemler
+    // Operations to perform before sending the request
     return config;
   },
   (error) => {
@@ -21,54 +21,56 @@ api.interceptors.request.use(
   }
 );
 
-// Yanıt interceptor'ı
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
-    // Başarılı yanıtlar için yapılacak işlemler
+    // Operations to perform for successful responses
     return response;
   },
   (error) => {
-    // Hata durumunda yapılacak işlemler
+    // Operations to perform for error responses
     if (axios.isAxiosError(error)) {
       if (error.response) {
-        // Sunucudan gelen hata yanıtı
+        // Error response from server
         const status = error.response.status;
         const errorData = error.response.data;
-        
-        console.error("API Hatası:", {
+
+        console.error("API Error:", {
           status,
-          message: errorData?.message || errorData?.error || "Sunucu hatası",
-          details: errorData
+          message: errorData?.message || errorData?.error || "Server error",
+          details: errorData,
         });
 
-        // Özel hata mesajları
+        // Special error messages
         switch (status) {
           case 400:
-            throw new Error("Geçersiz istek. Lütfen girdiğiniz bilgileri kontrol edin.");
+            throw new Error("Invalid request. Please check your inputs.");
           case 401:
-            throw new Error("Yetkilendirme hatası. API anahtarınızı kontrol edin.");
+            throw new Error("Authorization error. Please check your API key.");
           case 404:
-            throw new Error("İstenen kaynak bulunamadı.");
+            throw new Error("Requested resource not found.");
           case 429:
-            throw new Error("Çok fazla istek gönderildi. Lütfen biraz bekleyin.");
+            throw new Error("Too many requests. Please wait a moment.");
           case 500:
-            throw new Error("Sunucu hatası. Lütfen daha sonra tekrar deneyin.");
+            throw new Error("Server error. Please try again later.");
           default:
-            throw new Error(errorData?.message || "Beklenmeyen bir hata oluştu.");
+            throw new Error(errorData?.message || "Unexpected error occurred.");
         }
       } else if (error.request) {
-        // İstek yapıldı ama yanıt alınamadı
-        console.error("Bağlantı Hatası:", error.message);
-        throw new Error("Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.");
+        // Request was made but no response was received
+        console.error("Connection Error:", error.message);
+        throw new Error(
+          "Could not connect to the server. Please check your internet connection."
+        );
       } else {
-        // İstek oluşturulurken hata oluştu
-        console.error("İstek Hatası:", error.message);
-        throw new Error("İstek oluşturulurken bir hata oluştu.");
+        // Error occurred while creating the request
+        console.error("Request Error:", error.message);
+        throw new Error("Error occurred while creating the request.");
       }
     }
-    
-    // Axios hatası değilse
-    console.error("Beklenmeyen Hata:", error);
+
+    // If it's not an Axios error
+    console.error("Unexpected Error:", error);
     return Promise.reject(error);
   }
 );
