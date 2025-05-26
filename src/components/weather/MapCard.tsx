@@ -50,7 +50,7 @@ export default function MapCard() {
 
   // Render the map with the selected city's location
   return (
-    <Card className="p-6 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full">
+    <Card className="p-6 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-200 rounded-lg h-full transition-colors duration-300">
       <div className="flex flex-col gap-4">
         {/* Card header */}
         <div className="flex items-center justify-between">
