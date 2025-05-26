@@ -1,4 +1,3 @@
-import { WeatherCondition } from "@/types";
 
 // Weather icon mappings based on weather codes
 const weatherIcons: Record<number, string> = {
