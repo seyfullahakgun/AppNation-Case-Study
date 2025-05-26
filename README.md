@@ -70,14 +70,30 @@ pnpm dev
 
 ```
 src/
-├── app/                 # Next.js app router
-│   ├── api/            # API routes
-│   └── page.tsx        # Main page
-├── components/         # React components
-├── hooks/             # Custom hooks
-├── lib/               # Helper functions
-├── store/             # Zustand store
-└── types/             # TypeScript types
+├── app/                    # Next.js app router
+│   ├── api/               # API routes
+│   │   └── cities/        # City search API endpoint
+│   └── page.tsx           # Main page component
+├── components/            # React components
+│   ├── layout/           # Layout components
+│   │   ├── Header.tsx    # Header component
+│   │   └── Footer.tsx    # Footer component
+│   ├── ui/               # UI components
+│   │   ├── Button.tsx    # Button component
+│   │   └── Card.tsx      # Card component
+│   ├── weather/          # Weather related components
+│   │   ├── CurrentWeatherCard.tsx
+│   │   └── ForecastCard.tsx
+│   └── SearchBar.tsx     # Search component
+├── hooks/                # Custom hooks
+│   └── useDebounce.ts    # Debounce hook
+├── lib/                  # Helper functions and configurations
+│   ├── axios.ts          # Axios configuration
+│   └── utils.ts          # Utility functions
+├── store/                # Zustand store
+│   └── weatherStore.ts   # Weather state management
+└── types/                # TypeScript types
+    └── weather.ts        # Weather related types
 ```
 
 ## 🔧 API Integration
@@ -240,14 +256,30 @@ pnpm dev
 
 ```
 src/
-├── app/                 # Next.js app router
-│   ├── api/            # API routes
-│   └── page.tsx        # Ana sayfa
-├── components/         # React bileşenleri
-├── hooks/             # Custom hooks
-├── lib/               # Yardımcı fonksiyonlar
-├── store/             # Zustand store
-└── types/             # TypeScript tipleri
+├── app/                    # Next.js app router
+│   ├── api/               # API rotaları
+│   │   └── cities/        # Şehir arama API endpoint'i
+│   └── page.tsx           # Ana sayfa bileşeni
+├── components/            # React bileşenleri
+│   ├── layout/           # Layout bileşenleri
+│   │   ├── Header.tsx    # Header bileşeni
+│   │   └── Footer.tsx    # Footer bileşeni
+│   ├── ui/               # UI bileşenleri
+│   │   ├── Button.tsx    # Buton bileşeni
+│   │   └── Card.tsx      # Kart bileşeni
+│   ├── weather/          # Hava durumu ile ilgili bileşenler
+│   │   ├── CurrentWeatherCard.tsx
+│   │   └── ForecastCard.tsx
+│   └── SearchBar.tsx     # Arama bileşeni
+├── hooks/                # Custom hooks
+│   └── useDebounce.ts    # Debounce hook'u
+├── lib/                  # Yardımcı fonksiyonlar ve konfigürasyonlar
+│   ├── axios.ts          # Axios konfigürasyonu
+│   └── utils.ts          # Yardımcı fonksiyonlar
+├── store/                # Zustand store
+│   └── weatherStore.ts   # Hava durumu state yönetimi
+└── types/                # TypeScript tipleri
+    └── weather.ts        # Hava durumu ile ilgili tipler
 ```
 
 ## 🔧 API Entegrasyonu
@@ -257,7 +289,7 @@ OpenWeatherMap API'sini kullanıyoruz. API anahtarı almak için:
 1. [OpenWeatherMap](https://openweathermap.org/)'e kaydolun
 2. API anahtarı oluşturun
 3. `.env.local` dosyasına ekleyin
-> Not: API anahtarını e-posta ile gönderilen mesajda bulabilirsiniz.
+> Note: API anahtarını e-posta ile gönderilen mesajda bulabilirsiniz.
 
 ## 🚀 Deployment
 
